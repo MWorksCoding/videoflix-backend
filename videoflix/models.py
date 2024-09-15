@@ -1,35 +1,23 @@
 from django.db import models
-# from django.contrib.auth.models import (AbstractBaseUser, PermissionsMixin, BaseUserManager)
-# from uuid import uuid4
+from datetime import date
+import datetime
+from authemail.models import EmailUserManager, EmailAbstractUser
 
-# # Create your models here.
-
-# class UserManager(BaseUserManager):
-#     def create_user (self, email, password, **extra_fields):
-#         if not email:
-#             raise ValueError()
-#         user = self.model(email=self.normalize_email(email), **extra_fields)
-#         user.set_password(password)
-#         user.save()
-#         return user
+class MyUser(EmailAbstractUser):
+	objects = EmailUserManager()
+ 
+class Video(models.Model):
     
-#     def create_superuser (self, email, password):
-#         user = self.create_user(email=email, password=password)
-#         user.is_superuser = True
-#         user.is_staff = True
-#         user.save()
-#         return user
-    
-# class User(AbstractBaseUser, PermissionsMixin):
-#     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     email = models.EmailField(unique=True)
-#     is_staff = models.BooleanField(default=False)
-    
-#     USERNAME_FIELD = 'email'
-
-# class CustomUser(AbstractUser):
-#     email = models.EmailField(max_length=100, unique=True)
-    
-#     USERNAME_FIELD = 'email'
-#     REQUIRED_FIELDS = ['username']
+    GENRES = [
+    ("fitness", "Fitness"),
+    ("chess", "Chess"),
+    ("pets", "Pets"),
+    ("holiday", "Holiday"),
+    ]
+        
+    created_at = models.DateField(default=datetime.date.today)
+    title = models.CharField(max_length=80)
+    description = models.CharField(max_length=500)
+    video_file = models.FileField(upload_to="videos", blank=True, null=True)
+    thumbnail_file = models.FileField(upload_to="thumbnails", blank=True, null=True)
+    genre = models.CharField(max_length=20, choices=GENRES, default="fitness")

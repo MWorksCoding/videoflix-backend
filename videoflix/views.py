@@ -11,6 +11,8 @@ from rest_framework import status
 
 class LoginView(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
+        print('self', self)
+        print('request', request)
         # serializer takes the incoming data (user / password)
         serializer = self.serializer_class(data=request.data,
                                            context={'request': request})
