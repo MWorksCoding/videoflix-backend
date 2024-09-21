@@ -26,4 +26,5 @@ urlpatterns = [
     path('logout/', LogoutView.as_view()),
     path('api/accounts/', include('authemail.urls')),
     path("__debug__/", include("debug_toolbar.urls")),
+    path("django-rq/", include("django_rq.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
