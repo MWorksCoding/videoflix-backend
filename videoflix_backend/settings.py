@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     'videoflix.apps.VideoflixConfig',
 	'authemail',
     'debug_toolbar',
-    'django_rq'
+    'django_rq',
+    'import_export'
 ]
 
 MIDDLEWARE = [
@@ -125,9 +126,13 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
+# library for importing and exporting data with included admin integration (creating backup)
+# https://django-import-export.readthedocs.io/en/latest/
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+
+IMPORT_EXPORT_USE_TRANSACTIONS = True
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

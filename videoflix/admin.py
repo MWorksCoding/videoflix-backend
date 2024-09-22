@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.contrib.auth import get_user_model
 from authemail.admin import EmailUserAdmin
 from.models import Video
+from import_export import resources
+from import_export.admin import ImportExportModelAdmin
 
 class MyUserAdmin(EmailUserAdmin):
 	fieldsets = (
@@ -14,6 +16,17 @@ class MyUserAdmin(EmailUserAdmin):
 		('Custom info', {'fields': ('date_of_birth',)}),
 	)
 
+class VideoResource(resources.ModelResource):
+
+    class Meta:
+        model = Video
+ 
+class VideoAdmin(ImportExportModelAdmin):
+    pass
+
+@admin.register(Video)
+class VideoAdmin(ImportExportModelAdmin):
+    pass
+
 admin.site.unregister(get_user_model())
 admin.site.register(get_user_model(), MyUserAdmin)
-admin.site.register(Video)
