@@ -14,8 +14,8 @@ from django.core.cache import cache
 def video_post_save(sender, instance, created, **kwargs):
     """
     Signal receiver for handling actions after a Video instance is saved.
-    Run "python3 manage.py rqworker" to run worker first! 
     Run "brew services start redis" to start caching
+    Run "python3 manage.py rqworker" to run worker
     Run "brew services stop redis" to stop caching
 
     This function performs the following actions when a new Video instance is created:
@@ -47,8 +47,8 @@ def video_post_save(sender, instance, created, **kwargs):
 def video_post_delete(sender, instance, **kwargs):
     """
     Signal receiver for handling actions after a Video instance is deleted.
-    Run "python3 manage.py rqworker" to run worker first!
     Run "brew services start redis" to start caching
+    Run "python3 manage.py rqworker" to run worker
     Run "brew services stop redis" to stop caching
 
     This function performs the following actions:

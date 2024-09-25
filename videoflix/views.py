@@ -21,17 +21,10 @@ CACHE_TTL = getattr(settings, "CACHE_TTL", DEFAULT_TIMEOUT)
 
 class LoginView(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
-
-        # serializer takes the incoming data (user / password)
         serializer = self.serializer_class(data=request.data,
                                            context={'request': request})
-        # check validation
         serializer.is_valid(raise_exception=True)
-        # get user from validated data
         user = serializer.validated_data['user']
-        print('serializer.validated_data', serializer.validated_data)
-        print('user', user)
-        # create token or get token if user already logged in
         token, created = Token.objects.get_or_create(user=user)
         return Response({
             'token': token.key,
@@ -71,7 +64,7 @@ class VideoView(APIView):
     - post: Creates a new video entry for the authenticated user.
     """
 
-    # @method_decorator(cache_page(CACHE_TTL))
+# @method_decorator(cache_page(CACHE_TTL))
 class VideoView(APIView):
     permission_classes = [IsAuthenticated]
 

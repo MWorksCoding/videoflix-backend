@@ -5,7 +5,7 @@ import os
 # FFMPEG_PATH = "/usr/bin/ffmpeg"
 FFMPEG_PATH = "/Users/mariuskatzer/ffmpeg"
 
-def create_thumbnail(source_path, time="00:00:05", width=640, height=360):
+def create_thumbnail(source_path, time="00:00:00", width=640, height=360):
     """
     Creates a thumbnail for a given video file.
 
