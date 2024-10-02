@@ -14,6 +14,9 @@ from videoflix.models import Video
 from videoflix.serializers import VideoSerializer
 from django.shortcuts import get_object_or_404
 
+from authemail.views import Signup
+from authemail.models import SignupCode
+
 
 # Create your views here.
 

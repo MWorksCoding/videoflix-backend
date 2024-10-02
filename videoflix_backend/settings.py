@@ -12,6 +12,11 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+import ssl
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -153,13 +158,18 @@ MEDIA_URL = '/media/'
 
 AUTH_USER_MODEL = 'videoflix.MyUser'
 
-EMAIL_FROM = os.environ.get('AUTHEMAIL_DEFAULT_EMAIL_FROM') or '<YOUR DEFAULT_EMAIL_FROM HERE>'
-EMAIL_BCC = os.environ.get('AUTHEMAIL_DEFAULT_EMAIL_BCC') or '<YOUR DEFAULT_EMAIL_BCC HERE>'
-EMAIL_HOST = os.environ.get('AUTHEMAIL_EMAIL_HOST') or 'smtp.gmail.com'
-EMAIL_PORT = os.environ.get('AUTHEMAIL_EMAIL_PORT') or 587
-EMAIL_HOST_USER = os.environ.get('AUTHEMAIL_EMAIL_HOST_USER') or '<YOUR EMAIL_HOST_USER HERE>'
-EMAIL_HOST_PASSWORD = os.environ.get('AUTHEMAIL_EMAIL_HOST_PASSWORD') or '<YOUR EMAIL_HOST_PASSWORD HERE>'
-EMAIL_USE_TLS = True
+# Bypass SSL certificate verification (for local development only)
+# ssl._create_default_https_context = ssl._create_unverified_context
+
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_FROM = os.getenv('AUTHEMAIL_DEFAULT_EMAIL_FROM')
+EMAIL_BCC = os.getenv('AUTHEMAIL_DEFAULT_EMAIL_BCC')
+EMAIL_HOST = os.getenv('AUTHEMAIL_EMAIL_HOST')
+EMAIL_PORT = int(os.getenv('AUTHEMAIL_EMAIL_PORT')) 
+EMAIL_HOST_USER = os.getenv('AUTHEMAIL_EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('AUTHEMAIL_EMAIL_HOST_PASSWORD')
+EMAIL_USE_TLS = False
 EMAIL_USE_SSL = False
 
 CACHE_TTL = 60 * 15

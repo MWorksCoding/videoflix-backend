@@ -28,4 +28,5 @@ urlpatterns = [
     path('__debug__/', include('debug_toolbar.urls')),
     path('django-rq/', include('django_rq.urls')),
     path('videos/', VideoView.as_view()),
+    path('api/accounts/', include('authemail.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
