@@ -16,7 +16,7 @@ Including another URLconf
 '''
 from django.contrib import admin
 from django.urls import include, path
-from videoflix.views import LoginView, LogoutView, VideoView
+from videoflix.views import LoginView, LogoutView, VideoView, RegisterVerified, PasswordResetVerified
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -28,5 +28,6 @@ urlpatterns = [
     path('__debug__/', include('debug_toolbar.urls')),
     path('django-rq/', include('django_rq.urls')),
     path('videos/', VideoView.as_view()),
-    path('api/accounts/', include('authemail.urls')),
+    path('register-verified/', RegisterVerified.as_view()),
+    path('password-reset-verified/', PasswordResetVerified.as_view()),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

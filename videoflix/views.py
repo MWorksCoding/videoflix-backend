@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.shortcuts import render
+import requests
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
@@ -14,9 +15,8 @@ from videoflix.models import Video
 from videoflix.serializers import VideoSerializer
 from django.shortcuts import get_object_or_404
 
-from authemail.views import Signup
-from authemail.models import SignupCode
-
+from authemail.views import SignupVerify
+from django.http import HttpResponseRedirect, JsonResponse
 
 # Create your views here.
 
@@ -70,7 +70,6 @@ class VideoView(APIView):
 # @method_decorator(cache_page(CACHE_TTL))
 class VideoView(APIView):
     permission_classes = [IsAuthenticated]
-
     def get(self, request, pk=None, format=None):
         try:
             if pk:
@@ -82,3 +81,32 @@ class VideoView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+        
+class RegisterVerified(APIView):
+    def get(self, request, *args, **kwargs):
+        verification_code = request.query_params.get('code', None)
+        verify_url = f"http://127.0.0.1:8000/api/accounts/signup/verify/?code={verification_code}"
+        try:
+            response = requests.get(verify_url)
+            if response.status_code == 200:
+                return HttpResponseRedirect('http://localhost:4200/register-verified')
+            else:
+                return HttpResponseRedirect('http://localhost:4200/404')
+        except requests.exceptions.RequestException as e:
+            return HttpResponseRedirect('http://localhost:4200/404')
+        
+        
+class PasswordResetVerified(APIView):
+    def get(self, request, *args, **kwargs):
+        verification_code = request.query_params.get('code', None)
+        verify_url = f"http://127.0.0.1:8000/api/accounts/password/reset/verify/?code={verification_code}"
+        try:
+            response = requests.get(verify_url)
+            if response.status_code == 200:
+                return HttpResponseRedirect(f'http://localhost:4200/password-reset?code={verification_code}')
+            else:
+                return HttpResponseRedirect('http://localhost:4200/404')
+        except requests.exceptions.RequestException as e:
+            return HttpResponseRedirect('http://localhost:4200/404')
