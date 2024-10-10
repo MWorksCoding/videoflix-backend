@@ -23,6 +23,21 @@ from django.http import HttpResponseRedirect, JsonResponse
 CACHE_TTL = getattr(settings, "CACHE_TTL", DEFAULT_TIMEOUT)
 
 class LoginView(ObtainAuthToken):
+    """
+    Custom view for user login.
+    It inherits from Django Rest Framework's ObtainAuthToken class.
+    
+    POST method: Authenticates the user with email and password, 
+    generates a token for the session, and returns the token along 
+    with user details (ID and email).
+    
+    Parameters:
+    - request: HTTP POST request containing 'username' and 'password'.
+    
+    Returns:
+    - Response: A JSON response containing token, user_id, and email.
+    """
+    
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data,
                                            context={'request': request})
@@ -37,6 +52,18 @@ class LoginView(ObtainAuthToken):
         
 
 class LogoutView(APIView):
+    """
+    Custom view for user logout.
+    
+    POST method: Requires authentication. The token of the authenticated user 
+    is deleted, effectively logging out the user.
+    
+    Parameters:
+    - request: HTTP POST request with authentication token.
+    
+    Returns:
+    - Response: JSON message confirming successful logout.
+    """
     
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -49,26 +76,43 @@ class LogoutView(APIView):
     
     
 class VideoViewSet(viewsets.ModelViewSet):
+    """
+    Viewset for managing video resources.
+    
+    Provides CRUD operations on the 'Video' model, restricted to authenticated users.
+    
+    Parameters:
+    - queryset: List of all videos, ordered by creation time.
+    - serializer_class: Serializer for the 'Video' model.
+    
+    Permission:
+    - IsAuthenticated: Only authenticated users can access this viewset.
+    """
+    
     queryset = Video.objects.all().order_by("created_at")
     serializer_class = VideoSerializer
     permission_classes = [IsAuthenticated]
 
 
-class VideoView(APIView):
-    permission_classes = [IsAuthenticated]
-    """
-    VideoView class for handling video-related requests.
-
-    This view supports GET and POST methods for retrieving and creating videos respectively.
-    The view requires the user to be authenticated.
-
-    Methods:
-    - get: Retrieves videos based on visibility (public or private).
-    - post: Creates a new video entry for the authenticated user.
-    """
-
 # @method_decorator(cache_page(CACHE_TTL))
 class VideoView(APIView):
+    """
+    Custom API view for handling video resources.
+    
+    GET method:
+    - If a primary key (pk) is provided, fetch a specific video by ID.
+    - If no pk is provided, fetch all available videos.
+    
+    Returns serialized video data in JSON format. Only accessible to authenticated users.
+    
+    Parameters:
+    - request: HTTP GET request.
+    - pk (optional): Primary key of the video.
+    
+    Returns:
+    - Response: Serialized video data (single or list) in JSON format.
+    """
+    
     permission_classes = [IsAuthenticated]
     def get(self, request, pk=None, format=None):
         try:
@@ -85,6 +129,24 @@ class VideoView(APIView):
         
         
 class RegisterVerified(APIView):
+    """
+    Custom API view for handling user registration verification.
+    
+    GET method: Receives a verification code from the request's query parameters.
+    Sends a request to the authemail verification endpoint to verify the user.
+    
+    On success:
+    - Redirects the user to the frontend's registration success page.
+    On failure:
+    - Redirects to a 404 page.
+    
+    Parameters:
+    - request: HTTP GET request with 'code' query parameter.
+    
+    Returns:
+    - HttpResponseRedirect: Redirects the user based on verification status.
+    """
+    
     def get(self, request, *args, **kwargs):
         verification_code = request.query_params.get('code', None)
         verify_url = f"http://127.0.0.1:8000/api/accounts/signup/verify/?code={verification_code}"
@@ -99,6 +161,24 @@ class RegisterVerified(APIView):
         
         
 class PasswordResetVerified(APIView):
+    """
+    Custom API view for handling password reset verification.
+    
+    GET method: Receives a verification code from the request's query parameters.
+    Sends a request to the authemail password reset verification endpoint.
+    
+    On success:
+    - Redirects the user to the frontend password reset page with the verification code.
+    On failure:
+    - Redirects to a 404 page.
+    
+    Parameters:
+    - request: HTTP GET request with 'code' query parameter.
+    
+    Returns:
+    - HttpResponseRedirect: Redirects the user based on verification status.
+    """
+    
     def get(self, request, *args, **kwargs):
         verification_code = request.query_params.get('code', None)
         verify_url = f"http://127.0.0.1:8000/api/accounts/password/reset/verify/?code={verification_code}"

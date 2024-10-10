@@ -7,21 +7,22 @@ FFMPEG_PATH = "/Users/mariuskatzer/ffmpeg"
 
 def create_thumbnail(source_path, time="00:00:00", width=640, height=360):
     """
-    Creates a thumbnail for a given video file.
-
-    This function generates a thumbnail image from the specified video file at a given time,
-    with specified width and height.
-
-    Args:
-    - source_path (str): The path to the source video file.
-    - time (str, optional): The timestamp in the video from which to capture the thumbnail. Defaults to "00:00:05".
-    - width (int, optional): The width of the thumbnail image. Defaults to 640.
-    - height (int, optional): The height of the thumbnail image. Defaults to 360.
-
+    Create a thumbnail for a video file at a specified time.
+    
+    This function uses the FFMPEG tool to generate a thumbnail image 
+    from a video. The thumbnail is saved in the 'thumbnails' directory 
+    within the MEDIA_ROOT.
+    
+    Parameters:
+    - source_path (str): The path to the video file from which to generate the thumbnail.
+    - time (str, optional): The timestamp (in HH:MM:SS) at which to capture the thumbnail. Defaults to "00:00:00".
+    - width (int, optional): The width of the thumbnail. Defaults to 640 pixels.
+    - height (int, optional): The height of the thumbnail. Defaults to 360 pixels.
+    
     Returns:
-    - str: The path to the generated thumbnail image.
+    - str: The file path to the generated thumbnail image.
     """
-
+    
     file_name = os.path.splitext(os.path.basename(source_path))[0]
     thumbnail_path = os.path.join(settings.MEDIA_ROOT, "thumbnails", f"{file_name}.jpg")
     cmd = '{} -i "{}" -ss {} -vframes 1 -vf "scale={}:{}" -update 1 "{}"'.format(
@@ -32,13 +33,18 @@ def create_thumbnail(source_path, time="00:00:00", width=640, height=360):
 
 
 def convert720p(source_path):
+
     """
-    Converts a video file to 720p resolution.
-
-    This function converts the given video file to 720p resolution using FFmpeg.
-
-    Args:
-    - source_path (str): The path to the source video file.
+    Convert a video to 720p resolution.
+    
+    This function uses the FFMPEG tool to convert a video file to 
+    720p resolution and saves it with a new file name.
+    
+    Parameters:
+    - source_path (str): The path to the original video file.
+    
+    Returns:
+    - None
     """
 
     new_file_name = convert_path(source_path, "720p")
@@ -52,14 +58,18 @@ def convert720p(source_path):
 
 def convert480p(source_path):
     """
-    Converts a video file to 480p resolution.
-
-    This function converts the given video file to 480p resolution using FFmpeg.
-
-    Args:
-    - source_path (str): The path to the source video file.
+    Convert a video to 480p resolution.
+    
+    This function uses the FFMPEG tool to convert a video file to 
+    480p resolution and saves it with a new file name.
+    
+    Parameters:
+    - source_path (str): The path to the original video file.
+    
+    Returns:
+    - None
     """
-
+    
     new_file_name = convert_path(source_path, "480p")
     cmd = (
         '{} -i "{}" -s hd480 -c:v libx264 -crf 23 -c:a aac -strict -2 "{}"'.format(
@@ -71,18 +81,19 @@ def convert480p(source_path):
 
 def convert_path(source_path, resolution):
     """
-    Generates a new file path with a resolution suffix.
-
-    This function creates a new file path by appending the specified resolution to the base name of the source file.
-
-    Args:
-    - source_path (str): The path to the source file.
-    - resolution (str): The resolution suffix to add to the new file name.
-
+    Generate a new file name for the converted video based on resolution.
+    
+    This helper function modifies the original video file's path by appending
+    the resolution suffix (e.g., '_720p' or '_480p') to the file name.
+    
+    Parameters:
+    - source_path (str): The path to the original video file.
+    - resolution (str): The resolution suffix (e.g., '720p', '480p') to append to the file name.
+    
     Returns:
-    - str: The new file path with the resolution suffix.
+    - str: The new file path with the resolution suffix added to the file name.
     """
-
+    
     dot_index = source_path.rfind(".")
     base_name = source_path[:dot_index]
     ext = source_path[dot_index:]

@@ -28,9 +28,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-b&3o#l93k_5!d_e(h=!uclnpo0%ad$u2p999amhj%j@yruyd7s'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 CORS_ALLOWED_ORIGINS = ['http://localhost:4200',]
@@ -169,6 +166,8 @@ EMAIL_HOST = os.getenv('AUTHEMAIL_EMAIL_HOST')
 EMAIL_PORT = int(os.getenv('AUTHEMAIL_EMAIL_PORT')) 
 EMAIL_HOST_USER = os.getenv('AUTHEMAIL_EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('AUTHEMAIL_EMAIL_HOST_PASSWORD')
+DEBUG = os.getenv('DEBUG', default=False)
+
 EMAIL_USE_TLS = False
 EMAIL_USE_SSL = False
 
