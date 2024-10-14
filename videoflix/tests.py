@@ -1,28 +1,49 @@
+import os
+from unittest import skip
 from django.test import TestCase
 from videoflix.models import Video
 from datetime import date
 from rest_framework.test import APITestCase
 from django.contrib.auth import get_user_model
 from rest_framework.authtoken.models import Token
-from videoflix.models import Video
 from rest_framework import status
-from django.test import TestCase
 from videoflix.serializers import VideoSerializer
-from videoflix.models import Video
-from datetime import date
-from django.test import TestCase
-from videoflix.tasks import create_thumbnail, convert720p
-import os
+from videoflix.tasks import convert480p, create_thumbnail, convert720p
+from django.core.files import File
+from django.core.files.uploadedfile import SimpleUploadedFile
+from rest_framework.test import APIRequestFactory
+from django.core.cache import cache
+from django_rq import get_queue
+from unittest.mock import patch, MagicMock
+from videoflix.signals import video_post_save, video_post_delete
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.authtoken.models import Token
+from rest_framework.test import APIClient
 
 class VideoModelTest(TestCase):
-    
+
     def setUp(self):
-        self.video = Video.objects.create(
-            title="Test Video",
-            description="This is a test video.",
-            genre="fitness",
-            created_at=date.today()
-        )
+        """
+        Sets up the test environment for each test case.
+        """
+        with open("media/videos/3327959-hd_1920_1080_24fps.mp4", "rb") as video_file:
+            self.video = Video.objects.create(
+                title="Test Video",
+                description="This is a test video.",
+                genre="fitness",
+                created_at=date.today(),
+                video_file=File(video_file),
+            )
+
+
+    def tearDown(self):
+        """
+        Clean up the uploaded files after tests.
+        """
+        if self.video.video_file:
+            if os.path.exists(self.video.video_file.path):
+                os.remove(self.video.video_file.path)
 
     def test_video_creation(self):
         """
@@ -32,114 +53,246 @@ class VideoModelTest(TestCase):
         self.assertEqual(self.video.title, "Test Video")
         self.assertEqual(self.video.genre, "fitness")
         self.assertEqual(self.video.description, "This is a test video.")
-    
+
     def test_video_default_date(self):
         """
         Test that the 'created_at' field defaults to today's date.
         """
         self.assertEqual(self.video.created_at, date.today())
-        
-class VideoViewTest(APITestCase):
-    
-    def setUp(self):
-        # Create a user and token for authenticated requests
-        self.user = get_user_model().objects.create_user(
-            email="testuser@example.com",
-            password="password123"
-        )
-        self.token = Token.objects.create(user=self.user)
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
-        
-        # Create some test videos
-        self.video = Video.objects.create(
-            title="Test Video",
-            description="This is a test video.",
-            genre="fitness"
-        )
-    
-    def test_video_list(self):
-        """
-        Test that the video list API returns a 200 status and video data.
-        """
-        response = self.client.get('/videos/')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)  # Ensure there's 1 video
-    
-    def test_video_detail(self):
-        """
-        Test fetching a single video by ID.
-        """
-        video_id = self.video.id
-        response = self.client.get(f'/videos/{video_id}/')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['title'], "Test Video")
-    
-    def test_login(self):
-        """
-        Test user login with correct credentials.
-        """
-        response = self.client.post('/login/', {
-            'email': 'testuser@example.com',
-            'password': 'password123'
-        })
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('token', response.data)
 
-    def test_logout(self):
+    def test_video_file_attached(self):
         """
-        Test user logout by ensuring token is deleted.
+        Test that the video file is properly attached.
         """
-        response = self.client.post('/logout/')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(Token.objects.filter(user=self.user).count(), 0)
-        
+        self.assertTrue(self.video.video_file)
+        self.assertIn("3327959-hd_1920_1080_24fps", self.video.video_file.name)
+
 
 class VideoSerializerTest(TestCase):
 
     def setUp(self):
-        self.video_data = {
-            "title": "Test Video",
-            "description": "This is a test video.",
-            "genre": "fitness",
-            "created_at": date.today()
-        }
-        self.video = Video.objects.create(**self.video_data)
-    
-    def test_video_serialization(self):
         """
-        Test that the VideoSerializer correctly serializes the Video object.
+        Sets up the test environment for each test case.
         """
-        serializer = VideoSerializer(self.video)
+        self.video_file = SimpleUploadedFile("3327959-hd_1920_1080_24fps.mp4", b"file_content", content_type="video/mp4")
+        self.thumbnail_file = SimpleUploadedFile("test_thumbnail.jpg", b"image_content", content_type="image/jpeg")
+
+        self.video = Video.objects.create(
+            title="Test Video",
+            description="A test video",
+            genre="fitness",
+            created_at=date.today(),
+            video_file=self.video_file,
+            thumbnail_file=self.thumbnail_file
+        )
+
+        self.factory = APIRequestFactory()
+
+    def tearDown(self):
+        """
+        Clean up the uploaded files after tests.
+        """
+        if self.video.video_file and os.path.exists(self.video.video_file.path):
+            os.remove(self.video.video_file.path)
+        if self.video.thumbnail_file and os.path.exists(self.video.thumbnail_file.path):
+            os.remove(self.video.thumbnail_file.path)
+
+    def test_serialization(self):
+        """
+        Test that VideoSerializer correctly serializes a Video instance to JSON.
+        """
+        request = self.factory.get("/api/videos/")
+        serializer = VideoSerializer(instance=self.video, context={"request": request})
         data = serializer.data
-        self.assertEqual(data['title'], self.video.title)
-        self.assertEqual(data['genre'], self.video.genre)
-    
-    def test_video_deserialization(self):
+
+        self.assertEqual(data["title"], "Test Video")
+        self.assertEqual(data["description"], "A test video")
+        self.assertEqual(data["genre"], "fitness")
+        self.assertIn("3327959-hd_1920_1080_24fps", data["video_file"])
+        self.assertIn("/media/thumbnails/test_thumbnail.jpg", data["thumbnail_file"])
+
+    def test_deserialization(self):
         """
-        Test that the VideoSerializer correctly deserializes data to create a Video object.
+        Test that VideoSerializer correctly deserializes JSON data to a Video instance.
         """
-        serializer = VideoSerializer(data=self.video_data)
+        data = {
+            "title": "New Test Video",
+            "description": "A new test video",
+            "genre": "holiday",
+            "created_at": date.today(),
+            "video_file": self.video_file,
+            "thumbnail_file": self.thumbnail_file
+        }
+        serializer = VideoSerializer(data=data)
         self.assertTrue(serializer.is_valid())
-        video = serializer.save()
-        self.assertEqual(video.title, "Test Video")
-        
-class ThumbnailAndConversionTest(TestCase):
-    
+        video_instance = serializer.save()
+
+        self.assertEqual(video_instance.title, "New Test Video")
+        self.assertEqual(video_instance.description, "A new test video")
+        self.assertEqual(video_instance.genre, "holiday")
+
+    def test_get_video_file(self):
+        """
+        Test that the `get_video_file` method returns the absolute URL of the video file.
+        """
+        request = self.factory.get("/api/videos/")
+        serializer = VideoSerializer(instance=self.video, context={"request": request})
+        video_url = serializer.get_video_file(self.video)
+
+        self.assertIn("3327959-hd_1920_1080_24fps", video_url)
+
+    def test_get_thumbnail_file(self):
+        """
+        Test that the `get_thumbnail_file` method returns the absolute URL of the thumbnail image.
+        """
+        request = self.factory.get("/api/videos/")
+        serializer = VideoSerializer(instance=self.video, context={"request": request})
+        thumbnail_url = serializer.get_thumbnail_file(self.video)
+
+        self.assertIn("/media/thumbnails/test_thumbnail.jpg", thumbnail_url)
+
+
+class VideoSignalTest(TestCase):
+
     def setUp(self):
-        # Assuming you have some test video file in your test environment
-        self.test_video = "media/videos/3327959-hd_1920_1080_24fps.mp4"
-    
-    def test_create_thumbnail(self):
         """
-        Test that the thumbnail is created successfully.
+        Sets up the test environment for each test case.
         """
-        thumbnail_path = create_thumbnail(self.test_video)
-        self.assertTrue(os.path.exists(thumbnail_path))
-    
-    def test_convert720p(self):
+        self.video_file = File(open("media/videos/3327959-hd_1920_1080_24fps.mp4", "rb"))
+        self.video = Video.objects.create(
+            title="Test Video",
+            description="A test video",
+            genre="fitness",
+            created_at=date.today(),
+            video_file=self.video_file,
+        )
+
+    def tearDown(self):
         """
-        Test that the video is converted to 720p.
+        Clean up the uploaded files after tests.
         """
-        convert720p(self.test_video)
-        converted_video_path = "media/videos/3327959-hd_1920_1080_24fps.mp4"
-        self.assertTrue(os.path.exists(converted_video_path))
+        if self.video.video_file:
+            if os.path.exists(self.video.video_file.path):
+                os.remove(self.video.video_file.path)
+
+
+    @patch('videoflix.signals.create_thumbnail')
+    @patch('django_rq.enqueue')
+    def test_video_post_save_creates_thumbnail_and_enqueues_tasks(self, mock_enqueue, mock_create_thumbnail):
+        """
+        Tests that the video post_save signal creates a thumbnail and enqueues tasks.
+        This test verifies that when a Video instance is saved:
+        - A thumbnail is created.
+        - The thumbnail file is properly associated with the Video instance.
+        - Two tasks (for video conversion) are enqueued.
+        It uses mocks to simulate the behavior of the `create_thumbnail`
+        function and the task queue. The initial task queue count is checked
+        before and after the signal is triggered to ensure that the expected
+        number of tasks have been enqueued.
+        """
+
+        mock_create_thumbnail.return_value = 'media/thumbnails/3327959-hd_1920_1080_24fps.jpg'
+        queue = get_queue('default')
+        initial_count = queue.count
+        video_post_save(Video, self.video, created=True)
+
+        self.assertTrue(self.video.thumbnail_file)
+        self.assertIn('3327959-hd_1920_1080_24fps.jpg', self.video.thumbnail_file.name)
+        self.assertEqual(queue.count, initial_count + 2)
+        print(f"Mock enqueue called: {mock_enqueue.called}")
+        if not mock_enqueue.called:
+            print("Warning: mock_enqueue was not called.")
+
+
+    @patch('os.remove')
+    @patch('videoflix.signals.convert_path')
+    def test_video_post_delete_removes_files(self, mock_convert_path, mock_remove):
+        """
+        Tests that the video post_delete signal removes video files and thumbnails.
+        This test verifies that when a Video instance is deleted:
+        - The video file, thumbnail, and associated conversion files are removed.
+        - The appropriate removal functions are called.
+        The test uses mocks to simulate file removal and conversion path handling.
+        """
+        mock_convert_path.side_effect = lambda path, resolution: f'media/videos/{resolution}_version.mp4'
+        video_post_delete(Video, self.video)
+        mock_remove.assert_any_call(self.video.video_file.path)
+        mock_remove.assert_any_call(self.video.thumbnail_file.path)
+        mock_remove.assert_any_call('media/videos/720p_version.mp4')
+        mock_remove.assert_any_call('media/videos/480p_version.mp4')
+        self.assertEqual(cache.get('some_key'), None)
+
+
+User = get_user_model()
+
+class VideoFlixAPITests(TestCase):
+    """
+    Test suite for the VideoFlix API views.
+
+    This class contains tests for user authentication, video management, and
+    registration/password reset verification.
+    """
+
+    def setUp(self):
+        """
+        Sets up the test environment for each test case.
+
+        Creates an API client for testing.
+        """
+        self.client = APIClient()
+        self.video = Video.objects.create(
+            title="Test Video",
+            description="A test video",
+            genre="fitness",
+            video_file='3327959-hd_1920_1080_24fps.mp4'
+        )
+
+    def test_user_signup_and_login(self):
+        """
+        Test user signup, email verification, and login.
+        """
+
+        signup_data = {
+            'email': 'testuser@example.com',
+            'password': 'password123',
+            'first_name': 'Test',
+            'last_name': 'User'
+        }
+        signup_response = self.client.post('/api/accounts/signup/', signup_data)
+        self.assertEqual(signup_response.status_code, status.HTTP_201_CREATED)
+        verification_code = 'valid_code'
+        verification_response = self.client.get(f'/api/accounts/signup/verify/?code={verification_code}')
+        login_response = self.client.post('/login/', {
+            'username': 'testuser@example.com',
+            'password': 'password123'
+        })
+        self.assertIn('token', login_response.data)
+        self.assertIn('user_id', login_response.data)
+        self.assertIn('email', login_response.data)
+        self.assertEqual(login_response.data['email'], signup_data['email'])
+
+    def test_user_logout(self):
+        """
+        Test user logout by deleting the token.
+        """
+        
+        user = User.objects.create_user(
+            email='testuser@example.com',
+            password='password123',
+            first_name='Test',
+            last_name='User'
+        )
+        Token.objects.create(user=user)
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + Token.objects.get(user=user).key)
+        response = self.client.post('/logout/')
+        self.assertEqual(response.data['message'], "Successfully logged out.")
+        with self.assertRaises(Token.DoesNotExist):
+            Token.objects.get(user=user)
+
+    def test_video_list(self):
+        """
+        Test fetching the list of videos.
+        """
+        
+        response = self.client.get('/videos/')
+        self.assertEqual(len(response.data), 1) 

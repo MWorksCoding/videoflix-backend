@@ -15,6 +15,7 @@ def video_post_save(sender, instance, created, **kwargs):
     """
     Signal receiver for handling actions after a Video instance is saved.
     Run "brew services start redis" to start caching
+    Run "python3 manage.py runserver " to get started
     Run "python3 manage.py rqworker" to run worker
     Run "brew services stop redis" to stop caching
 
@@ -48,6 +49,7 @@ def video_post_delete(sender, instance, **kwargs):
     """
     Signal receiver for handling actions after a Video instance is deleted.
     Run "brew services start redis" to start caching
+    Run "python3 manage.py runserver " to get started
     Run "python3 manage.py rqworker" to run worker
     Run "brew services stop redis" to stop caching
 

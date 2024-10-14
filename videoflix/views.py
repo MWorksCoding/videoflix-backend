@@ -14,9 +14,7 @@ from django.utils.decorators import method_decorator
 from videoflix.models import Video
 from videoflix.serializers import VideoSerializer
 from django.shortcuts import get_object_or_404
-
-from authemail.views import SignupVerify
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseRedirect
 
 # Create your views here.
 
