@@ -3,7 +3,7 @@ from django.dispatch import receiver
 from django.conf import settings
 from .models import Video
 import os
-from .tasks import convert720p, convert480p, convert_path, create_thumbnail
+from .tasks import convert720p, convert120p, convert360p, rename_to_1080p, convert_path, create_thumbnail
 from django_rq import enqueue
 import django_rq
 
@@ -35,41 +35,12 @@ def video_post_save(sender, instance, created, **kwargs):
         if not instance.thumbnail_file.name:
             thumbnail_path = create_thumbnail(instance.video_file.path)
             instance.thumbnail_file.name = thumbnail_path[
-                len(settings.MEDIA_ROOT) + 1 :
+            len(settings.MEDIA_ROOT) + 1 :
             ]
             instance.save()
         queue = django_rq.get_queue("default", autocommit=True)
         queue.enqueue(convert720p, instance.video_file.path)
-        queue.enqueue(convert480p, instance.video_file.path)
+        queue.enqueue(convert360p, instance.video_file.path)
+        queue.enqueue(convert120p, instance.video_file.path)
+        queue.enqueue(rename_to_1080p, instance.video_file.path)
         cache.clear()
-
-
-@receiver(post_delete, sender=Video)
-def video_post_delete(sender, instance, **kwargs):
-    """
-    Signal receiver for handling actions after a Video instance is deleted.
-    Run "brew services start redis" to start caching
-    Run "python3 manage.py runserver " to get started
-    Run "python3 manage.py rqworker" to run worker
-    Run "brew services stop redis" to stop caching
-
-    This function performs the following actions:
-    - Removes the original video file and its related files (thumbnail, 720p, and 480p versions).
-    - Clears the cache.
-
-    Args:
-    - sender: The model class (Video).
-    - instance: The actual instance being deleted.
-    - **kwargs: Additional keyword arguments.
-    """
-
-    if instance.video_file:
-        path_720p = convert_path(instance.video_file.path, "720p")
-        path_480p = convert_path(instance.video_file.path, "480p")
-
-        if os.path.isfile(instance.video_file.path):
-            os.remove(instance.video_file.path)
-            os.remove(instance.thumbnail_file.path)
-            os.remove(path_720p)
-            os.remove(path_480p)
-            cache.clear()

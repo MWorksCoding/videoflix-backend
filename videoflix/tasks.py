@@ -2,10 +2,9 @@ import subprocess # run commands from terminal
 from django.conf import settings
 import os
 
-# FFMPEG_PATH = "/usr/bin/ffmpeg"
 FFMPEG_PATH = "/Users/mariuskatzer/ffmpeg"
 
-def create_thumbnail(source_path, time="00:00:00", width=640, height=360):
+def create_thumbnail(source_path, time="00:00:01", width=854 , height=480):
     """
     Create a thumbnail for a video file at a specified time.
     
@@ -56,27 +55,57 @@ def convert720p(source_path):
     subprocess.run(cmd, shell=True)
 
 
-def convert480p(source_path):
+def convert360p(source_path):
     """
-    Convert a video to 480p resolution.
+    Convert a video to 360p resolution.
     
     This function uses the FFMPEG tool to convert a video file to 
-    480p resolution and saves it with a new file name.
+    360p resolution and saves it with a new file name.
+    
+    Parameters:
+    - source_path (str): The path to the original video file.
+    """
+    new_file_name = convert_path(source_path, "360p")
+    cmd = (
+        '{} -i "{}" -s 640x360 -c:v libx264 -crf 23 -c:a aac -strict -2 "{}"'.format(
+           FFMPEG_PATH, source_path, new_file_name
+        )
+    )
+    subprocess.run(cmd, shell=True)
+    
+
+def convert120p(source_path):
+    """
+    Convert a video to 120p resolution.
+    
+    This function uses the FFMPEG tool to convert a video file to 
+    120p resolution and saves it with a new file name.
+    
+    Parameters:
+    - source_path (str): The path to the original video file.
+    """
+    new_file_name = convert_path(source_path, "120p")
+    cmd = (
+        '{} -i "{}" -s 160x120 -c:v libx264 -crf 23 -c:a aac -strict -2 "{}"'.format(
+           FFMPEG_PATH, source_path, new_file_name
+        )
+    )
+    subprocess.run(cmd, shell=True)
+    
+
+def rename_to_1080p(source_path):
+    """
+    Rename the original file to have '_1080p' appended.
     
     Parameters:
     - source_path (str): The path to the original video file.
     
     Returns:
-    - None
+    - new_file_name: The renamed file path with '_1080p'.
     """
-    
-    new_file_name = convert_path(source_path, "480p")
-    cmd = (
-        '{} -i "{}" -s hd480 -c:v libx264 -crf 23 -c:a aac -strict -2 "{}"'.format(
-           FFMPEG_PATH, source_path, new_file_name
-        )
-    )
-    subprocess.run(cmd, shell=True)
+    new_file_name = convert_path(source_path, "1080p")
+    os.rename(source_path, new_file_name)
+    return new_file_name
 
 
 def convert_path(source_path, resolution):
@@ -84,11 +113,11 @@ def convert_path(source_path, resolution):
     Generate a new file name for the converted video based on resolution.
     
     This helper function modifies the original video file's path by appending
-    the resolution suffix (e.g., '_720p' or '_480p') to the file name.
+    the resolution suffix (e.g., '_720p') to the file name.
     
     Parameters:
     - source_path (str): The path to the original video file.
-    - resolution (str): The resolution suffix (e.g., '720p', '480p') to append to the file name.
+    - resolution (str): The resolution suffix (e.g., '120p', '360p', '720p', '1080p') to append to the file name.
     
     Returns:
     - str: The new file path with the resolution suffix added to the file name.

@@ -3,3 +3,6 @@ env/
 db.sqlite3
 media/thumbnails
 media/videos
+info.txt
+Dockerfile
+.dockerignore

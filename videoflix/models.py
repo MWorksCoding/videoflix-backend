@@ -32,7 +32,6 @@ class Video(models.Model):
     
     GENRES = [
     ("fitness", "Fitness"),
-    ("chess", "Chess"),
     ("pets", "Pets"),
     ("holiday", "Holiday"),
     ]
