@@ -38,7 +38,27 @@ ALLOWED_HOSTS = [
 
 CORS_ALLOWED_ORIGINS = [
         'http://localhost:4200',
-        'https://videoflix.marius-katzer.com/']
+        'https://videoflix.marius-katzer.com',
+        'https://videoflix-server.marius-katzer.com',
+        'http://127.0.0.1:8000']
+
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = [
+    'content-type',
+    'authorization',
+    'x-csrftoken',
+]
+
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+    'OPTIONS',
+]
 
 # Application definition
 
