@@ -31,5 +31,4 @@ urlpatterns = [
     path('videos/', VideoView.as_view()),
     path('register-verified/', RegisterVerified.as_view()),
     path('password-reset-verified/', PasswordResetVerified.as_view()),
-] +  staticfiles_urlpatterns()
-# static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] +  static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

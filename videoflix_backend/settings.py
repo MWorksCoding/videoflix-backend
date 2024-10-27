@@ -34,7 +34,8 @@ ALLOWED_HOSTS = [
 	'35.246.244.60:80',
 	'35.246.224.60:443',
 	'35.246.224.60',
-	'videoflix-server.marius-katzer.com']
+	'videoflix-server.marius-katzer.com',
+	'videoflix.marius-katzer.com']
 
 CORS_ALLOWED_ORIGINS = [
         'http://localhost:4200',
