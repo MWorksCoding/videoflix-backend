@@ -19,6 +19,7 @@ from django.urls import include, path
 from videoflix.views import LoginView, LogoutView, VideoView, RegisterVerified, PasswordResetVerified
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -30,4 +31,5 @@ urlpatterns = [
     path('videos/', VideoView.as_view()),
     path('register-verified/', RegisterVerified.as_view()),
     path('password-reset-verified/', PasswordResetVerified.as_view()),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] +  staticfiles_urlpatterns()
+# static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
