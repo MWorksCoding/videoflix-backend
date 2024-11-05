@@ -1,7 +1,7 @@
 asgiref==3.8.1
 certifi==2024.8.30
 charset-normalizer==3.3.2
-click==8.1.7
+click==8.1.7p
 coverage==7.6.2
 diff-match-patch==20230430
 Django==5.1.1
