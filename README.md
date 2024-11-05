@@ -53,7 +53,8 @@ Set up Redis
 Install Redis and start the Redis server.
 Set up FFmpeg
 
-Install FFmpeg and ensure it is available in your system's PATH.
+Install FFmpeg and ensure it is available in your systems PATH.
+
 Configure email settings
 
 Update the email settings in videoflix/settings.py with your email service credentials.
