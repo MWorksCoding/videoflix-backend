@@ -74,28 +74,13 @@ DATABASE_USER=user
 DATABASE_PASSWORD=test-password2
 SECRET_KEY=django-123456789
 
-
-Collect static files
-
-bash
-Code kopieren
-python manage.py collectstatic
 Run the development server
 
 bash
 Code kopieren
 python manage.py runserver
 Frontend Setup
-Navigate to the frontend directory
 
-bash
-Code kopieren
-cd frontend
-Install the dependencies
-
-bash
-Code kopieren
-npm install
 Run the development server
 
 bash
